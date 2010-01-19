@@ -1,0 +1,34 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=2932
+
+PLEASE RATE THIS PLUGIN, IF YOU LIKE IT!
+
+Feedback is always welcome. See :h histwin-feedback.
+
+You can now follow development of this plugin via github: http://github.com/chrisbra/histwin.vim
+
+Vim 7 has an amazing feature that is called undo-branches. See :h undo-tree. Unfortunalley it is a little bit clumsy to use. 
+
+Therefore this plugin allows for easy navigation between the different undo-branches for a file.
+See this screenshot: http://www.256bit.org/~chrisbra/vim_undotree.png
+This plugin was inspired by the undo_branches plugin (http://www.vim.org/scripts/script.php?script_id=1997).
+
+This plugin allows you to
+- see all available undo-branches (Timestamps and Keywords)
+- tag certain states
+- switching to different states (including the first state (before any changes were made)
+- allow to diff the selected undo-branch with the current version
+- replay the changes (ok, this is just for fun ;)
+
+Open the UndoBrowse window by issuing :UB
+A new window will appear, which contains the name of the file you are watching a small help
+banner that contains the most important mappings for this window and a list of all available
+undo-branches (which shows the time when this change was made and your tags for that state, if there are any). On each entry you can press Enter or T to jump to that state or tag that state.
+
+This plugin maps the following keys:
+- 'Enter' on an entry jump to that state in time of the file
+- 'T' tags a state with a phrase. 
+- 'R' lets you replay a change 
+- 'I' opens/closes the help banner
+- 'Q' closes the window
+- CTRL-L reload view
+- D diff selected version
