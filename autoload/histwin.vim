@@ -2,7 +2,7 @@
 " -------------------------------------------------------------
 " Last Change: 2010, Jan 20
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Version:     0.6
+" Version:     0.7
 " Copyright:   (c) 2009 by Christian Brabandt
 "              The VIM LICENSE applies to histwin.vim 
 "              (see |copyright|) except use "histwin.vim" 
@@ -10,18 +10,12 @@
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
 "
-" TODO: - enable GLVS:
-"       - write documentation
+" TODO: "       - write documentation
 "       - don't use matchadd for syntax highlighting but use
 "         appropriate syntax highlighting rules
 
-" Init:"{{{
-if exists("g:loaded_undo_browse") || &cp
-	 finish
-endif
-
-let g:loaded_undo_browse=1
-let s:cpo=&cpo
+" Init:
+let s:cpo= &cpo
 set cpo&vim
 
 " Show help banner?
@@ -32,8 +26,8 @@ set cpo&vim
 let s:undo_help=(exists("g:undo_tree_help") ? g:undo_tree_help : 
 			\(exists("s:undo_help") ? s:undo_help : 1) )"}}}
 
-" Functions:"{{{
-fu! <sid>Init()"{{{
+" Functions:
+fun! s:Init()
 	if !exists("s:undo_winname")
 		let s:undo_winname='Undo_Tree'
 	endif
@@ -49,9 +43,9 @@ fu! <sid>Init()"{{{
 		let s:orig_buffer = bufnr('')
 	endif
 	"let s:orig_buffer = bufname('')
-endfu"}}}
+endfun 
 
-fu! <sid>ReturnHistList(winnr)"{{{
+fun! s:ReturnHistList(winnr)
     exe a:winnr . ' wincmd w'
 	let histlist=[]
 	redir => a
@@ -80,9 +74,9 @@ fu! <sid>ReturnHistList(winnr)"{{{
 	   call add(histlist, {'change': change, 'number': nr, 'time': time})
 	endfor
 	return histlist
-endfu"}}}
+endfun 
 
-fu! <sid>HistWin()"{{{
+fun! s:HistWin()
 	let undo_buf=bufwinnr('^'.s:undo_winname.'$')
 	if undo_buf != -1
 		exe undo_buf . 'wincmd w'
@@ -96,9 +90,9 @@ fu! <sid>HistWin()"{{{
 	endif
 	exe bufwinnr(s:orig_buffer) . ' wincmd w'
 	return undo_buf
-endfu"}}}
+endfun 
 
-fu! <sid>PrintUndoTree(winnr)"{{{
+fun! s:PrintUndoTree(winnr)
 	let bufname  = (empty(bufname(s:orig_buffer)) ? '[No Name]' : fnamemodify(bufname(s:orig_buffer),':t'))
 	let changenr = changenr()
 	exe a:winnr . 'wincmd w'
@@ -112,7 +106,7 @@ fu! <sid>PrintUndoTree(winnr)"{{{
 	call setline(1,'Undo-Tree: '.bufname)
 	put =repeat('=', strlen(getline(1)))
 	put =''
-	call <sid>PrintHelp(s:undo_help)
+	call s:PrintHelp(s:undo_help)
 	call append('$', printf("%s %-9s %s", "Nr", "  Time", "Tag"))
 	let i=1
 	for line in histlist
@@ -124,13 +118,13 @@ fu! <sid>PrintUndoTree(winnr)"{{{
 		\ tag ))
 		let i+=1
 	endfor
-	call <sid>MapKeys()
-	call <sid>HilightLines(<sid>GetCurrentState(changenr,histlist)+1)
+	call s:MapKeys()
+	call s:HilightLines(s:GetCurrentState(changenr,histlist)+1)
 	setl nomodifiable
 	let ret=setpos('.', save_cursor)
-endfu"}}}
+endfun 
 
-fu! <sid>HilightLines(changenr)"{{{
+fun! s:HilightLines(changenr)
 	" check for availability of matchadd()/clearmatches()
 	if !exists("*matchadd") || !exists("*clearmatches")
 		return
@@ -147,9 +141,9 @@ fu! <sid>HilightLines(changenr)"{{{
 	if a:changenr 
 		if hlexists("PmenuSel") | 	call matchadd('PmenuSel', '^0*'.a:changenr.')[^/]*')| endif
 	endif
-endfu"}}}
+endfun 
 
-fu! <sid>PrintHelp(...)"{{{
+fun! s:PrintHelp(...)
 	if a:1
 		put =\"\\" I\t  Toggle this help\"
 		put =\"\\" <Enter> goto undo branch\"
@@ -162,9 +156,9 @@ fu! <sid>PrintHelp(...)"{{{
 		put =\"\\" I\t Toggle help screen\"
 	endif
 	put =''
-endfu"}}}
+endfun 
 
-fu! <sid>DiffUndoBranch(change)"{{{
+fun! s:DiffUndoBranch(change)
 	let prevchangenr=<sid>UndoBranch(a:change)
 	let buffer=getline(1,'$')
 	exe ':u ' . prevchangenr
@@ -176,9 +170,9 @@ fu! <sid>DiffUndoBranch(change)"{{{
 	diffthis
 	exe bufwinnr(s:orig_buffer) . 'wincmd w'
 	diffthis
-endfu"}}}
+endfun 
 
-fu! <sid>GetCurrentState(changenr,histlist)"{{{
+fun! s:GetCurrentState(changenr,histlist)
 	let i=0
 	for item in a:histlist
 	    if item['change'] == a:changenr
@@ -187,9 +181,9 @@ fu! <sid>GetCurrentState(changenr,histlist)"{{{
 		let i+=1
 	endfor
 	return -1
-endfu!"}}}
+endfun!
 
-fu! <sid>ReplayUndoBranch(change)"{{{
+fun! s:ReplayUndoBranch(change)
 	exe bufwinnr(s:orig_buffer) . ' wincmd w'
 	let end=b:undo_list[a:change-1]['number']
 	exe ':u ' . b:undo_list[a:change-1]['change']
@@ -202,29 +196,29 @@ fu! <sid>ReplayUndoBranch(change)"{{{
 	sleep 100m
 	let start+=1
 	endw
-endfu"}}}
+endfun 
 
-fu! <sid>ReturnBranch()"{{{
+fun! s:ReturnBranch()
 	return matchstr(getline('.'), '^\d\+\ze')+0
-endfu"}}}
+endfun 
 
-fu! <sid>ToggleHelpScreen()"{{{
+fun! s:ToggleHelpScreen()
 	let s:undo_help=!s:undo_help
 	exe bufwinnr(s:orig_buffer) . ' wincmd w'
-	call <sid>PrintUndoTree(<sid>HistWin())
-endfu"}}}
+	call s:PrintUndoTree(s:HistWin())
+endfun 
 
-fu! <sid>UndoBranchTag(change)"{{{
+fun! s:UndoBranchTag(change)
 	let tagdict=getbufvar(s:orig_buffer, 'undo_tagdict')
 	call inputsave()
 	let tag=input("Tagname " . a:change . ": ", get(tagdict, a:change-1, ''))
 	call inputrestore()
 	let tagdict[a:change-1] = tag
 	call setbufvar('#', 'undo_tagdict', tagdict)
-	call <sid>PrintUndoTree(<sid>HistWin())
-endfu"}}}
+	call s:PrintUndoTree(s:HistWin())
+endfun 
 
-fu! <sid>UndoBranch(change)"{{{
+fun! s:UndoBranch(change)
 	exe bufwinnr(s:orig_buffer) . 'wincmd w'
 	let cmd=''
 	let cur_changenr=changenr()
@@ -238,46 +232,27 @@ fu! <sid>UndoBranch(change)"{{{
 			exe cmd
 	endif
 	return cur_changenr
-endfu"}}}
+endfun 
 
-fu! <sid>MapKeys()"{{{
-	"noremap <script> <buffer> <expr> <CR> <sid>UndoBranch(<sid>ReturnBranch())
-	noremap <script> <buffer> I :<C-U>silent :call <sid>ToggleHelpScreen()<CR>
-	noremap <script> <buffer> <CR> :<C-U>silent :call <sid>UndoBranch(<sid>ReturnBranch())<CR>:call <sid>UndoBrowse()<CR>
-	noremap <script> <buffer> T :call <sid>UndoBranchTag(<sid>ReturnBranch())<CR>
-	noremap <script> <buffer> D :<C-U>silent :call <sid>DiffUndoBranch(<sid>ReturnBranch())<CR>
-	noremap <script> <buffer> <C-L> :<C-U>silent :call <sid>UndoBrowse()<CR>
-	noremap <script> <buffer> R :<C-U>silent :call <sid>ReplayUndoBranch(<sid>ReturnBranch())<CR>
-	noremap <script> <buffer> Q :<C-U>q<CR>
-endfu"}}}
+fun! s:MapKeys()
+	"noremap <script> <buffer> <expr> <CR> s:UndoBranch(s:ReturnBranch())
+	noremap <script> <buffer> I     :<C-U>silent                                      :call s:ToggleHelpScreen()<CR>
+	noremap <script> <buffer> <CR>  :<C-U>silent                                      :call s:UndoBranch(s:ReturnBranch())<CR>       :call histwin#UndoBrowse()<CR>
+	noremap <script> <buffer> T     :call <sid>UndoBranchTag(<sid>ReturnBranch())<CR>
+	noremap <script> <buffer> D     :<C-U>silent                                      :call s:DiffUndoBranch(s:ReturnBranch())<CR>
+	noremap <script> <buffer> <C-L> :<C-U>silent                                      :call histwin#UndoBrowse()<CR>
+	noremap <script> <buffer> R     :<C-U>silent                                      :call s:ReplayUndoBranch(s:ReturnBranch())<CR>
+	noremap <script> <buffer> Q     :<C-U>q<CR>
+endfun 
 
-fu! <sid>UndoBrowse()"{{{
-	call <sid>Init()
-	let b:undo_win  = <sid>HistWin()
-	let b:undo_list = <sid>ReturnHistList(bufwinnr(s:orig_buffer))
-	call <sid>PrintUndoTree(b:undo_win)
-endfu"}}}
-"}}}
-
-" User_Command:"{{{
-com! -nargs=0 UB :call <sid>UndoBrowse()
-"}}}
-
-" ChangeLog:
-" 0.6     - fix missing bufname() when creating the undo_tree window
-"		  - make undo_tree window a little bit smaller
-"		    (size is adjustable via g:undo_tree_wdth variable)
-" 0.5     - add missing endif (which made version 0.4 unusuable)
-" 0.4     - Allow diffing with selected branch
-"         - highlight current version
-"         - Fix annoying bug, that displays 
-"           --No lines in buffer--
-" 0.3     - Use changenr() to determine undobranch
-"         - <C-L> updates view
-"         - allow switching to initial load state, before
-"           buffer was edited
+fun! histwin#UndoBrowse()
+	call s:Init()
+	let b:undo_win  = s:HistWin()
+	let b:undo_list = s:ReturnHistList(bufwinnr(s:orig_buffer))
+	call s:PrintUndoTree(b:undo_win)
+endfun 
 
 " Restore:
 let &cpo=s:cpo
 unlet s:cpo
-" vim: ts=4 sts=4 fdm=marker com+=l\:\" spell spelllang=en
+" vim: ts=4 sts=4 fdm=marker com+=l\:\" spell spelllang=en fdm=syntax
